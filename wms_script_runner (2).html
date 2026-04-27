@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Script Anulare task-uri pick INFOLOG</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f1117;
+    --surface: #181c27;
+    --surface2: #1e2333;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --accent: #4f8ef7;
+    --accent-dim: rgba(79,142,247,0.12);
+    --green: #34d399;
+    --green-dim: rgba(52,211,153,0.12);
+    --amber: #fbbf24;
+    --amber-dim: rgba(251,191,36,0.1);
+    --red: #f87171;
+    --red-dim: rgba(248,113,113,0.1);
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 1.25rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+  }
+
+  .logo-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+  }
+
+  header h1 {
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    letter-spacing: 0.02em;
+  }
+
+  header span {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    margin-left: auto;
+  }
+
+  main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    max-height: calc(100vh - 57px);
+  }
+
+  .panel {
+    padding: 2rem;
+    overflow-y: auto;
+  }
+
+  .panel-left {
+    border-right: 1px solid var(--border);
+  }
+
+  .section { margin-bottom: 2rem; }
+
+  .section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .env-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .env-btn {
+    padding: 10px 12px;
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    background: var(--surface2);
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: left;
+    letter-spacing: 0.02em;
+  }
+
+  .env-btn:hover {
+    border-color: var(--accent);
+    color: var(--text);
+    background: var(--accent-dim);
+  }
+
+  .env-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-dim);
+    box-shadow: 0 0 0 1px var(--accent) inset;
+  }
+
+  .env-btn .env-tag {
+    display: block;
+    font-size: 9px;
+    color: var(--muted);
+    margin-top: 3px;
+    font-weight: 400;
+  }
+
+  .env-btn.active .env-tag { color: var(--accent); opacity: 0.7; }
+
+  textarea {
+    width: 100%;
+    min-height: 180px;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 12px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.7;
+    resize: vertical;
+    transition: border-color 0.15s;
+  }
+
+  textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  textarea::placeholder { color: var(--muted); opacity: 0.5; }
+
+  .counter {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .counter .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--muted);
+  }
+
+  .counter.has-data .dot { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .counter.has-data { color: var(--green); }
+
+  .sql-output {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.9;
+    white-space: pre;
+    overflow-x: auto;
+    min-height: 280px;
+    position: relative;
+  }
+
+  .sql-output.empty { color: var(--muted); font-style: italic; }
+
+  .kw { color: #7dd3fc; }
+  .tbl { color: #c084fc; }
+  .env-hl { color: var(--red); font-weight: 600; }
+  .field { color: var(--accent); }
+  .val { color: var(--amber); }
+  .str { color: var(--green); }
+  .punct { color: var(--muted); }
+
+  .actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .btn {
+    padding: 9px 18px;
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 1px solid var(--border2);
+    background: var(--surface2);
+    color: var(--muted);
+  }
+
+  .btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+
+  .btn.primary {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .btn.primary:hover { background: var(--accent); color: #fff; }
+
+  .btn.success {
+    background: var(--green-dim);
+    border-color: var(--green);
+    color: var(--green);
+  }
+
+  .alert {
+    display: none;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-family: var(--mono);
+    margin-bottom: 1rem;
+    border: 1px solid;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .alert.warn {
+    background: var(--amber-dim);
+    border-color: var(--amber);
+    color: var(--amber);
+  }
+
+  .alert.show { display: flex; }
+
+  .status-bar {
+    border-top: 1px solid var(--border);
+    padding: 8px 2rem;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--surface);
+  }
+
+  .status-item { display: flex; align-items: center; gap: 6px; }
+  .status-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--muted); }
+  .status-dot.active { background: var(--green); box-shadow: 0 0 4px var(--green); }
+
+  @media (max-width: 768px) {
+    main { grid-template-columns: 1fr; max-height: none; }
+    .panel-left { border-right: none; border-bottom: 1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-dot"></div>
+  <h1>Script Anulare task-uri pick INFOLOG</h1>
+  <span>GEPAL Update Tool</span>
+</header>
+
+<main>
+  <div class="panel panel-left">
+
+    <div class="section">
+      <div class="section-label">Environment</div>
+      <div class="env-grid">
+        <button class="env-btn" onclick="selectEnv('FGE50AUBU5', this)">
+          FGE50AUBU5
+          <span class="env-tag">Productie Ambient Stefanesti</span>
+        </button>
+        <button class="env-btn" onclick="selectEnv('FGE50AUDV3', this)">
+          FGE50AUDV3
+          <span class="env-tag">Productie Ambient Calan</span>
+        </button>
+        <button class="env-btn" onclick="selectEnv('FGE50AUDV4', this)">
+          FGE50AUDV4
+          <span class="env-tag">Productie Fresh Calan</span>
+        </button>
+        <button class="env-btn" onclick="selectEnv('FGE50AUBUH', this)">
+          FGE50AUBUH
+          <span class="env-tag">Productie Fresh Stefanesti</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">SSCC-uri paleți</div>
+      <textarea id="sscc-input"
+        placeholder="Introdu SSCC-urile, unul per linie:&#10;675030000165434543&#10;675030000165434437&#10;&#10;Sau direct din script cu apostroafe:&#10;'675030000165434543','675030000165434437'"
+        oninput="updatePreview()"></textarea>
+      <div class="counter" id="counter">
+        <div class="dot"></div>
+        <span id="counter-text">0 SSCC-uri</span>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="panel">
+
+    <div class="section">
+      <div class="section-label">Script SQL generat</div>
+
+      <div class="alert warn" id="warn-prod">
+        &#9888; Atentie: Environment de productie selectat. Verifica SSCC-urile!
+      </div>
+
+      <div class="sql-output empty" id="sql-output">-- Selecteaza un environment si introdu
+-- SSCC-urile pentru a genera scriptul.</div>
+
+      <div class="actions">
+        <button class="btn primary" id="copy-btn" onclick="copySQL()">Copiaza scriptul</button>
+        <button class="btn" onclick="clearAll()">Reset</button>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<div class="status-bar">
+  <div class="status-item">
+    <div class="status-dot" id="s-env"></div>
+    <span id="s-env-text">Niciun env selectat</span>
+  </div>
+  <div class="status-item">
+    <div class="status-dot" id="s-sscc"></div>
+    <span id="s-sscc-text">0 SSCC-uri</span>
+  </div>
+  <div class="status-item" style="margin-left: auto;">
+    <span>Script Anulare task-uri pick INFOLOG v1.0</span>
+  </div>
+</div>
+
+<script>
+  let currentEnv = '';
+  let plainSQL = '';
+
+  function selectEnv(env, btn) {
+    document.querySelectorAll('.env-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentEnv = env;
+    const isProd = env === 'FGE50AUBU5';
+    const warn = document.getElementById('warn-prod');
+    warn.classList.toggle('show', isProd);
+    document.getElementById('s-env').classList.toggle('active', true);
+    document.getElementById('s-env-text').textContent = env;
+    updatePreview();
+  }
+
+  function parseSSCCs() {
+    const raw = document.getElementById('sscc-input').value;
+    const matches = raw.match(/\d{10,}/g);
+    return matches ? [...new Set(matches)] : [];
+  }
+
+  function updatePreview() {
+    const ssccs = parseSSCCs();
+    const count = ssccs.length;
+    const counter = document.getElementById('counter');
+    const counterText = document.getElementById('counter-text');
+    counterText.textContent = count + ' SSCC-' + (count === 1 ? 'uri introdus' : 'uri introduse');
+    counter.className = 'counter' + (count > 0 ? ' has-data' : '');
+
+    document.getElementById('s-sscc').classList.toggle('active', count > 0);
+    document.getElementById('s-sscc-text').textContent = count + ' SSCC-uri';
+
+    const out = document.getElementById('sql-output');
+
+    if (!currentEnv || count === 0) {
+      out.className = 'sql-output empty';
+      out.innerHTML = '-- Selecteaza un environment si introdu\n-- SSCC-urile pentru a genera scriptul.';
+      plainSQL = '';
+      return;
+    }
+
+    out.className = 'sql-output';
+
+    const inListHTML = ssccs.map(s => '<span class="str">\'' + s + '\'</span>').join(',\n');
+    const inListPlain = ssccs.map(s => "'" + s + "'").join(',\n');
+
+    out.innerHTML =
+      '<span class="kw">UPDATE</span> <span class="env-hl">' + currentEnv + '</span><span class="punct">.</span><span class="tbl">GEPAL</span>\n' +
+      '<span class="kw">SET</span>\n' +
+      '    <span class="field">uvcdes</span> <span class="punct">=</span> <span class="val">0</span><span class="punct">,</span>\n' +
+      '    <span class="field">coldes</span> <span class="punct">=</span> <span class="val">0</span><span class="punct">,</span>\n' +
+      '    <span class="field">numliv</span> <span class="punct">=</span> <span class="val">99999999</span><span class="punct">,</span>\n' +
+      '    <span class="field">numvag</span> <span class="punct">=</span> <span class="val">0</span>\n' +
+      '<span class="kw">WHERE</span>  <span class="field">codpal</span> <span class="kw">in</span>\n<span class="punct">(</span>\n' +
+      inListHTML + '\n<span class="punct">)</span>';
+
+    plainSQL =
+      'UPDATE ' + currentEnv + '.GEPAL\n' +
+      'SET\n' +
+      '    uvcdes = 0,\n' +
+      '    coldes = 0,\n' +
+      '    numliv = 99999999,\n' +
+      '    numvag = 0\n' +
+      'WHERE  codpal in\n(\n' +
+      inListPlain + '\n)';
+  }
+
+  function copySQL() {
+    if (!plainSQL) return;
+    navigator.clipboard.writeText(plainSQL).then(() => {
+      const btn = document.getElementById('copy-btn');
+      btn.textContent = 'Copiat!';
+      btn.className = 'btn success';
+      setTimeout(() => {
+        btn.textContent = 'Copiaza scriptul';
+        btn.className = 'btn primary';
+      }, 2000);
+    });
+  }
+
+  function clearAll() {
+    document.getElementById('sscc-input').value = '';
+    document.querySelectorAll('.env-btn').forEach(b => b.classList.remove('active'));
+    currentEnv = '';
+    plainSQL = '';
+    document.getElementById('warn-prod').classList.remove('show');
+    document.getElementById('s-env').classList.remove('active');
+    document.getElementById('s-env-text').textContent = 'Niciun env selectat';
+    document.getElementById('s-sscc').classList.remove('active');
+    document.getElementById('s-sscc-text').textContent = '0 SSCC-uri';
+    updatePreview();
+  }
+</script>
+</body>
+</html>
